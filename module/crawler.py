@@ -15,7 +15,7 @@ def crawl_news(query):
             step = 1000
 
         params = dict(
-            query=urllib.parse.quote('책상'),
+            query=urllib.parse.quote(query),
             display=urllib.parse.quote('100'),
             start=urllib.parse.quote(str(step)),
             sort=urllib.parse.quote('date'),
