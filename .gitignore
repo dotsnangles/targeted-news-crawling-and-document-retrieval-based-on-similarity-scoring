@@ -1,5 +1,6 @@
 .ref
 .old
+.results
 __pycache__
 *.json
 *.csv
