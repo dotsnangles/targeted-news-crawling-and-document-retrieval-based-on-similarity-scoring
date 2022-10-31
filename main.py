@@ -52,6 +52,9 @@ def main():
     result = result[search_sub_org & search_query].copy().reset_index(drop=True)
 
     result.to_csv(f'{"_".join([query, org_name])}_crawled.csv', index=False, encoding='utf-8-sig')
-
+    
+    print(f'검색어 {query}, 상위기관명 {org_name}으로 총 {len(result)}건이 수집되었습니다.')
+    print(f'{"_".join([query, org_name])}_crawled.csv')
+    
 if __name__ == '__main__':
     main()
