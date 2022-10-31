@@ -24,8 +24,8 @@ def get_news_list(crawling_trg, client_id, client_secret):
         url = f"https://openapi.naver.com/v1/search/news?query={params['query']}&display={params['display']}&start={params['start']}&sort={params['sort']}"
 
         request = urllib.request.Request(url)
-        request.add_header('X-Naver-Client-Id',client_id)
-        request.add_header('X-Naver-Client-Secret',client_secret)
+        request.add_header('X-Naver-Client-Id', client_id)
+        request.add_header('X-Naver-Client-Secret', client_secret)
         response = urllib.request.urlopen(request)
         rescode = response.getcode()
 
@@ -35,12 +35,11 @@ def get_news_list(crawling_trg, client_id, client_secret):
             news_list.extend(result)
         else:
             print('Error Code:' + rescode)
-        # print(step)
         
         time.sleep(5)
         
-        if step == 101:
-            break
+        # if step == 101:
+        #     break
     
     news_list_df = pd.DataFrame(news_list).drop_duplicates()
     news_list_df['checker'] = news_list_df.link.str.find('https://n.news.naver.com/')
@@ -55,25 +54,26 @@ def get_news_list(crawling_trg, client_id, client_secret):
 def crawl_news(news_list_df, headers):
     crawled_news = []
     for idx, row in news_list_df.iterrows():
-        # row.crawling_trg, row.pubDate, row.title, cleansed_news_body, row.originallink, row.link, row.description
+        # row.crawling_trg, row.pubDate, row.title, cleansed_news_content, row.originallink, row.link, row.description
         URL = str(row.link)
         r = requests.get(URL, headers=headers)
         
         try:
             soup = BeautifulSoup(r.content, 'html5lib')
-            news_body = soup.select('#newsct_article')[0].text
-            cleansed_news_body = re.sub(r'[\n\t^/$]', '', news_body)
-            crawled_news.append([row.crawling_trg, row.pubDate, row.title, cleansed_news_body, row.originallink, row.link, row.description])
+            news_content = soup.select('#newsct_article')[0].text
+            cleansed_news_content = re.sub(r'[\n\t^/$]', '', news_content)
+            crawled_news.append([row.crawling_trg, row.pubDate, row.title, cleansed_news_content, row.originallink, row.link, row.description])
         except Exception as e:
             soup = BeautifulSoup(r.content, 'html5lib')
-            news_body = soup.select('#articeBody')[0].text
-            cleansed_news_body = re.sub(r'[\n\t^/$]', '', news_body)
-            crawled_news.append([row.crawling_trg, row.pubDate, row.title, cleansed_news_body, row.originallink, row.link, row.description])
+            news_content = soup.select('#articeBody')[0].text
+            cleansed_news_content = re.sub(r'[\n\t^/$]', '', news_content)
+            crawled_news.append([row.crawling_trg, row.pubDate, row.title, cleansed_news_content, row.originallink, row.link, row.description])
         
         time.sleep(5)
         
-        if idx == 3:
-            break
+        # if idx == 3:
+        #     break
     
-    crawled_news_df = pd.DataFrame(crawled_news, columns=['crawling_trg', 'pubDate', 'title', 'body', 'originallink', 'link', 'description'])
+    crawled_news_df = pd.DataFrame(crawled_news, columns=['crawling_trg', 'pubDate', 'title', 'content', 'originallink', 'link', 'description'])
+    
     return crawled_news_df
