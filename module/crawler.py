@@ -36,7 +36,7 @@ def get_news_list(crawling_trg, client_id, client_secret):
         else:
             print('Error Code:' + rescode)
         
-        time.sleep(5)
+        time.sleep(1)
         
         # if step == 101:
         #     break
@@ -69,7 +69,7 @@ def crawl_news(news_list_df, headers):
             cleansed_news_content = re.sub(r'[\n\t^/$]', '', news_content)
             crawled_news.append([row.crawling_trg, row.pubDate, row.title, cleansed_news_content, row.originallink, row.link, row.description])
         
-        time.sleep(5)
+        time.sleep(1)
         
         # if idx == 3:
         #     break

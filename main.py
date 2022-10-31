@@ -1,11 +1,10 @@
 import json
 import argparse
 import pandas as pd
-import numpy as np
 from tqdm import tqdm
 from module.crawler import get_news_list, crawl_news
 from module.preprocess import preprocess
-from datetime import datetime, timedelta
+from module.utils import filter_time
 
 ### python main.py --query '검색어' --org '상위기관명'
 
@@ -44,6 +43,10 @@ def main():
     crawled_news_dfs = []
     for crawling_trg in tqdm(crawling_trgs):
         news_list_df = get_news_list(crawling_trg, client_id, client_secret)
+        
+        ### 90일 전까지의 기사만 필터링합니다.
+        news_list_df = filter_time(news_list_df)
+        
         crawled_news_df = crawl_news(news_list_df, headers)
         crawled_news_dfs.append(crawled_news_df)
         
@@ -56,16 +59,6 @@ def main():
     
     ### 간단한 전처리를 진행합니다.
     result = preprocess(result)
-
-    ### 90일 전까지의 기사만 남겨둡니다.    
-    now = datetime.now()
-    diff_days = timedelta(days=90)
-    three_months_ago = now - diff_days
-    three_months_ago = np.datetime64(three_months_ago)
-    
-    result['time'] = pd.to_datetime(result['pubDate']).dt.tz_convert(None)
-    result = result.loc[(result['time'] >= three_months_ago)]
-    result = result.drop(['time'], axis=1)
 
     ### 저장하기
     result.to_csv(f'{"_".join([query, org_name])}_crawled.csv', index=False, encoding='utf-8-sig')
