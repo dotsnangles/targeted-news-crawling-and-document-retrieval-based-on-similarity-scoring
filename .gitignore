@@ -1,0 +1,6 @@
+.ref
+.old
+__pycache__
+*.json
+*.csv
+todos.md
