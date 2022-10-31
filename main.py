@@ -1,8 +1,11 @@
 import json
 import argparse
 import pandas as pd
+import numpy as np
 from tqdm import tqdm
 from module.crawler import get_news_list, crawl_news
+from module.preprocess import preprocess
+from datetime import datetime, timedelta
 
 ### python main.py --query '검색어' --org '상위기관명'
 
@@ -50,7 +53,21 @@ def main():
     search_sub_org = result.content.str.contains('|'.join(sub_orgs), case=False, regex=True)
     search_query = result.content.str.contains(query, case=False, regex=True)
     result = result[search_sub_org & search_query].copy().reset_index(drop=True)
+    
+    ### 간단한 전처리를 진행합니다.
+    result = preprocess(result)
 
+    ### 90일 전까지의 기사만 남겨둡니다.    
+    now = datetime.now()
+    diff_days = timedelta(days=90)
+    three_months_ago = now - diff_days
+    three_months_ago = np.datetime64(three_months_ago)
+    
+    result['time'] = pd.to_datetime(result['pubDate']).dt.tz_convert(None)
+    result = result.loc[(result['time'] >= three_months_ago)]
+    result = result.drop(['time'], axis=1)
+
+    ### 저장하기
     result.to_csv(f'{"_".join([query, org_name])}_crawled.csv', index=False, encoding='utf-8-sig')
     
     print(f'검색어 {query}, 상위기관명 {org_name}으로 총 {len(result)}건이 수집되었습니다.')
