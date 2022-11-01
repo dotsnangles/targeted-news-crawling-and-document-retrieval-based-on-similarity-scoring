@@ -44,6 +44,7 @@ def main():
 
     ### 사업체-검색어 조합을 크롤링 목록에 추가
     crawling_trgs.append(' '.join([business_name, query]))
+    print('다음 항목들에 대하여 크롤링을 시작합니다.')
     print(crawling_trgs)
 
     ### get_news_list와 crawl_news로 Crawling 진행
@@ -54,15 +55,15 @@ def main():
             ### 90일 전까지의 기사만 필터링합니다.
             news_list_df = filter_time(news_list_df)
             
-            crawled_news_df = crawl_news(news_list_df, headers)
+            crawled_news_df = crawl_news(query, crawling_trg, news_list_df, headers)
             crawled_news_dfs.append(crawled_news_df)
         
     result = pd.concat(crawled_news_dfs)
 
-    ### 제외 if not (하위기관명 and 검색어) in 뉴스본문
-    search_sub_org = result.content.str.contains('|'.join(sub_orgs+[business_name]), case=False, regex=True)
-    search_query = result.content.str.contains(query, case=False, regex=True)
-    result = result[search_sub_org & search_query].copy().reset_index(drop=True)
+    ### 제외 if not (하위기관명 and 검색어) in 뉴스본문 > 로직을 바꿔서 crawl_news 내부로 이동 
+    # search_sub_org = result.content.str.contains('|'.join(sub_orgs+[business_name]), case=False, regex=True)
+    # search_query = result.content.str.contains(query, case=False, regex=True)
+    # result = result[search_sub_org & search_query].copy().reset_index(drop=True)
     
     ### 간단한 전처리를 진행합니다.
     result = preprocess(result)

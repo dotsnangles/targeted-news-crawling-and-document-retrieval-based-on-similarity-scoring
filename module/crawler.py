@@ -58,7 +58,7 @@ def get_news_list(crawling_trg, client_id, client_secret):
 
 
 ### Naver API에서 불러온 뉴스 항목의 본문을 불러옵니다.
-def crawl_news(news_list_df, headers):
+def crawl_news(query, crawling_trg, news_list_df, headers):
     crawled_news = []
     for idx, row in news_list_df.iterrows():
         # row.crawling_trg, row.pubDate, row.title, cleansed_news_content, row.originallink, row.link, row.description
@@ -71,10 +71,15 @@ def crawl_news(news_list_df, headers):
             cleansed_news_content = re.sub(r'[\n\t^/$]', '', news_content)
             crawled_news.append([row.crawling_trg, row.pubDate, row.title, cleansed_news_content, row.originallink, row.link, row.description])
         except Exception as e:
-            soup = BeautifulSoup(r.content, 'html5lib')
-            news_content = soup.select('#articeBody')[0].text
-            cleansed_news_content = re.sub(r'[\n\t^/$]', '', news_content)
-            crawled_news.append([row.crawling_trg, row.pubDate, row.title, cleansed_news_content, row.originallink, row.link, row.description])
+            try:
+                soup = BeautifulSoup(r.content, 'html5lib')
+                news_content = soup.select('#articeBody')[0].text
+                cleansed_news_content = re.sub(r'[\n\t^/$]', '', news_content)
+                crawled_news.append([row.crawling_trg, row.pubDate, row.title, cleansed_news_content, row.originallink, row.link, row.description])
+            except Exception as e:
+                print(e)
+                print('다음 주소의 문서를 크롤링하지 못 했습니다.')
+                print(f'{str(row.link)}')
         
         time.sleep(1)
         
@@ -82,5 +87,10 @@ def crawl_news(news_list_df, headers):
         #     break
     
     crawled_news_df = pd.DataFrame(crawled_news, columns=['crawling_trg', 'pubDate', 'title', 'content', 'originallink', 'link', 'description'])
+    
+    sub_org = crawling_trg.split(query)[0].strip()
+    search_sub_org = crawled_news_df.content.str.contains(sub_org, case=False, regex=True)
+    search_query = crawled_news_df.content.str.contains(query, case=False, regex=True)
+    crawled_news_df = crawled_news_df[search_sub_org & search_query].copy().reset_index(drop=True)
     
     return crawled_news_df
