@@ -5,9 +5,10 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import time
+from datetime import datetime
+
 
 ### Naver API에서 뉴스 항목을 불러옵니다.
-
 def get_news_list(crawling_trg, client_id, client_secret):
     news_list = []
     for step in range(1, 1100, 100):
@@ -42,15 +43,21 @@ def get_news_list(crawling_trg, client_id, client_secret):
         #     break
     
     news_list_df = pd.DataFrame(news_list).drop_duplicates()
-    news_list_df['checker'] = news_list_df.link.str.find('https://n.news.naver.com/')
-    news_list_df = news_list_df[news_list_df['checker'] > -1]
-    news_list_df.reset_index(inplace=True)
-    news_list_df['crawling_trg'] = crawling_trg
     
-    return news_list_df
+    try:
+        news_list_df['checker'] = news_list_df.link.str.find('https://n.news.naver.com/')
+        news_list_df = news_list_df[news_list_df['checker'] > -1]
+        news_list_df.reset_index(inplace=True)
+        news_list_df['crawling_trg'] = crawling_trg
+        return news_list_df
+    except Exception as e:
+        print(e)
+        time_stamp = str(datetime.now())
+        news_list_df.to_csv(f'{crawling_trg}_{e}_{time_stamp}.csv', index=False, encoding='utf-8-sig')
+        return None
+
 
 ### Naver API에서 불러온 뉴스 항목의 본문을 불러옵니다.
-
 def crawl_news(news_list_df, headers):
     crawled_news = []
     for idx, row in news_list_df.iterrows():

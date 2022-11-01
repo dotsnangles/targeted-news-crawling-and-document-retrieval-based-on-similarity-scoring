@@ -1,6 +1,7 @@
 .ref
 .old
 .results
+sbert
 __pycache__
 *.json
 *.csv

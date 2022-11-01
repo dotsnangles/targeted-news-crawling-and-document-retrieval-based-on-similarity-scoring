@@ -6,7 +6,8 @@ from module.crawler import get_news_list, crawl_news
 from module.preprocess import preprocess
 from module.utils import filter_time
 
-### python main.py --query '검색어' --org '상위기관명'
+### 사용 예시
+### python main.py --query '인공지능' --org '문화체육관광부' --business '클라썸'
 
 def main():
     ### Naver API 사용을 위한 ID와 Key
@@ -26,34 +27,40 @@ def main():
     ### Argument Parsing
     parser = argparse.ArgumentParser()
     parser.add_argument("--query", dest="query", action="store")
+    parser.add_argument("--business", dest="business", action="store")
     parser.add_argument("--org", dest="org", action="store")
     args = parser.parse_args()
 
     query = args.query
+    business_name = args.business
     org_name = args.org
     sub_orgs = gov_orgs[args.org]
 
-    ### 상위기관-하위기관-검색어 조합 생성
+    ### 입력으로 받은 상위기관의 하위기관-검색어 조합 생성
     crawling_trgs = []
     for sub_org in sub_orgs:
-        crawling_trg = ' '.join([org_name, sub_org, query])
+        crawling_trg = ' '.join([sub_org, query])
         crawling_trgs.append(crawling_trg)
+
+    ### 사업체-검색어 조합을 크롤링 목록에 추가
+    crawling_trgs.append(' '.join([business_name, query]))
+    print(crawling_trgs)
 
     ### get_news_list와 crawl_news로 Crawling 진행
     crawled_news_dfs = []
     for crawling_trg in tqdm(crawling_trgs):
         news_list_df = get_news_list(crawling_trg, client_id, client_secret)
-        
-        ### 90일 전까지의 기사만 필터링합니다.
-        news_list_df = filter_time(news_list_df)
-        
-        crawled_news_df = crawl_news(news_list_df, headers)
-        crawled_news_dfs.append(crawled_news_df)
+        if type(news_list_df) != type(None):
+            ### 90일 전까지의 기사만 필터링합니다.
+            news_list_df = filter_time(news_list_df)
+            
+            crawled_news_df = crawl_news(news_list_df, headers)
+            crawled_news_dfs.append(crawled_news_df)
         
     result = pd.concat(crawled_news_dfs)
 
     ### 제외 if not (하위기관명 and 검색어) in 뉴스본문
-    search_sub_org = result.content.str.contains('|'.join(sub_orgs), case=False, regex=True)
+    search_sub_org = result.content.str.contains('|'.join(sub_orgs+[business_name]), case=False, regex=True)
     search_query = result.content.str.contains(query, case=False, regex=True)
     result = result[search_sub_org & search_query].copy().reset_index(drop=True)
     
@@ -61,10 +68,11 @@ def main():
     result = preprocess(result)
 
     ### 저장하기
-    result.to_csv(f'{"_".join([query, org_name])}_crawled.csv', index=False, encoding='utf-8-sig')
+    save_name = f'{"_".join([query, org_name, business_name])}_crawled.csv'
+    result.to_csv(save_name, index=False, encoding='utf-8-sig')
     
-    print(f'검색어 {query}, 상위기관명 {org_name}으로 총 {len(result)}건이 수집되었습니다.')
-    print(f'{"_".join([query, org_name])}_crawled.csv')
+    # print(f'검색어 {query}, 상위기관명 {org_name}으로 총 {len(result)}건이 수집되었습니다.')
+    print(save_name)
     
 if __name__ == '__main__':
     main()
