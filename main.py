@@ -5,6 +5,7 @@ from tqdm import tqdm
 from module.crawler import get_news_list, crawl_news
 from module.preprocess import preprocess
 from module.utils import filter_time
+from module.retrieve import retrieve_docs
 
 ### 사용 예시
 ### python main.py --query '인공지능' --org '문화체육관광부' --business '클라썸'
@@ -45,7 +46,8 @@ def main():
     ### 사업체-검색어 조합을 크롤링 목록에 추가
     crawling_trgs.append(' '.join([business_name, query]))
     print('다음 항목들에 대하여 크롤링을 시작합니다.')
-    print(crawling_trgs)
+    print(' / '.join(crawling_trgs))
+    print()
 
     ### get_news_list와 crawl_news로 Crawling 진행
     crawled_news_dfs = []
@@ -58,22 +60,28 @@ def main():
             crawled_news_df = crawl_news(query, crawling_trg, news_list_df, headers)
             crawled_news_dfs.append(crawled_news_df)
         
-    result = pd.concat(crawled_news_dfs)
+    crawling_result = pd.concat(crawled_news_dfs)
 
-    ### 제외 if not (하위기관명 and 검색어) in 뉴스본문 > 로직을 바꿔서 crawl_news 내부로 이동 
-    # search_sub_org = result.content.str.contains('|'.join(sub_orgs+[business_name]), case=False, regex=True)
-    # search_query = result.content.str.contains(query, case=False, regex=True)
-    # result = result[search_sub_org & search_query].copy().reset_index(drop=True)
-    
     ### 간단한 전처리를 진행합니다.
-    result = preprocess(result)
+    crawling_result = preprocess(crawling_result)
 
     ### 저장하기
     save_name = f'{"_".join([query, org_name, business_name])}_crawled.csv'
-    result.to_csv(save_name, index=False, encoding='utf-8-sig')
+    crawling_result.to_csv(save_name, index=False, encoding='utf-8-sig')
+    print(f'크롤링이 완료되었습니다. 다음 파일을 생성했습니다.')
+    print(f'{save_name}')
     
-    # print(f'검색어 {query}, 상위기관명 {org_name}으로 총 {len(result)}건이 수집되었습니다.')
-    print(save_name)
+    print('문서간 유사도 검사를 수행합니다.')
+    top_of_business_news_contents, tops_of_org_news_contents_splits, result = retrieve_docs(query, business_name, crawling_result)
+
+    top_of_business_news_contents.to_csv('top_scored_business_news_for_query.csv', index=False, encoding='utf-8-sig')
+    tops_of_org_news_contents_splits.to_csv('list_of_top_scored_org_news_for_query_by_org.csv', index=False, encoding='utf-8-sig')
+    result.to_csv('top_5_orgs_and_their_news_for_top_scored_business_news.csv', index=False, encoding='utf-8-sig')
+    
+    print('문서간 유사도 검사가 완료되었습니다. 다음 파일을 생성했습니다.')
+    print('top_scored_business_news_for_query.csv')
+    print('list_of_top_scored_org_news_for_query_by_org.csv')
+    print('top_5_orgs_and_their_news_for_top_scored_business_news.csv')
     
 if __name__ == '__main__':
     main()
