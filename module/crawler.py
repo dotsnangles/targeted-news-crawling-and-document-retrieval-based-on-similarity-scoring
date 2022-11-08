@@ -89,6 +89,8 @@ def crawl_news(query, crawling_trg, news_list_df, headers):
     crawled_news_df = pd.DataFrame(crawled_news, columns=['crawling_trg', 'pubDate', 'title', 'content', 'originallink', 'link', 'description'])
     
     sub_org = crawling_trg.split(query)[0].strip()
+    
+    ### 쿼리와 기관명이 들어가 있는 기사만 추려냅니다.
     search_sub_org = crawled_news_df.content.str.contains(sub_org, case=False, regex=True)
     search_query = crawled_news_df.content.str.contains(query, case=False, regex=True)
     crawled_news_df = crawled_news_df[search_sub_org & search_query].copy().reset_index(drop=True)
