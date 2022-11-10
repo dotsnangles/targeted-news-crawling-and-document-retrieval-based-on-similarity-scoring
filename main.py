@@ -1,4 +1,5 @@
 import json
+import os
 import argparse
 import pandas as pd
 from tqdm import tqdm
@@ -6,6 +7,7 @@ from module.crawler import get_news_list, crawl_news
 from module.preprocess import preprocess
 from module.utils import filter_time
 from module.retrieve import retrieve_docs
+from module.visualize import save_pie_chart, save_wordclouds
 
 ### 사용 예시
 ### python main.py --keyword '인공지능' --org '문화체육관광부' --business '클라썸'
@@ -35,18 +37,18 @@ def main():
     keyword = args.keyword
     business_name = args.business
     org_name = args.org
-    sub_orgs = gov_orgs[args.org]
-    sub_orgs += [business_name]
+    targets = gov_orgs[args.org]
+    targets += [business_name]
 
     ### 하위기관명과 키워드 조합 / 비지니스명과 키워드 조합 크롤링 수행
     crawled_news_dfs = []
-    for sub_org in tqdm(sub_orgs):
-        news_list_df = get_news_list(sub_org, keyword, client_id, client_secret)
+    for target in tqdm(targets):
+        news_list_df = get_news_list(target, keyword, client_id, client_secret)
         if type(news_list_df) != type(None):
             ### 90일 전까지의 기사만 필터링합니다.
             news_list_df = filter_time(news_list_df)
             
-            crawled_news_df = crawl_news(sub_org, keyword, news_list_df, headers)
+            crawled_news_df = crawl_news(target, keyword, news_list_df, headers)
             crawled_news_dfs.append(crawled_news_df)
         
     crawling_result = pd.concat(crawled_news_dfs)
@@ -55,19 +57,26 @@ def main():
     crawling_result = preprocess(crawling_result)
 
     ### 저장하기
+    
+    SAVE_ROOT = 'results'
+    
     save_name = f'{"_".join([keyword, org_name, business_name])}_crawled.csv'
-    crawling_result.to_csv(save_name, index=False, encoding='utf-8-sig')
+    crawling_result.to_csv(os.path.join(SAVE_ROOT, save_name), index=False, encoding='utf-8-sig')
     print(f'크롤링이 완료되었습니다. 다음 파일을 생성했습니다.')
-    print(f'{save_name}')
+    print(f'{os.path.join(SAVE_ROOT, save_name)}')
     
     print('문서간 유사도 검사를 수행합니다.')
     top_of_business_news_contents, tops_of_org_news_contents_splits, result = retrieve_docs(business_name, crawling_result)
 
-    top_of_business_news_contents.to_csv('top_scored_business_news.csv', index=False, encoding='utf-8-sig')
-    tops_of_org_news_contents_splits.to_csv('list_of_top_scored_org_news.csv', index=False, encoding='utf-8-sig')
-    result.to_csv('top_5_orgs_and_their_news.csv', index=False, encoding='utf-8-sig')
+    top_of_business_news_contents.to_csv(os.path.join(SAVE_ROOT, 'top_scored_business_news.csv'), index=False, encoding='utf-8-sig')
+    tops_of_org_news_contents_splits.to_csv(os.path.join(SAVE_ROOT, 'list_of_top_scored_org_news.csv'), index=False, encoding='utf-8-sig')
+    result.to_csv(os.path.join(SAVE_ROOT, 'top_5_orgs_and_their_news.csv'), index=False, encoding='utf-8-sig')
+    
+    save_pie_chart(result, SAVE_ROOT)
+    save_wordclouds(result, SAVE_ROOT)
     
     print('문서간 유사도 검사가 완료되었습니다. 다음 파일을 생성했습니다.')
+    print(f'저장 폴더: {SAVE_ROOT}')
     print('top_scored_business_news_for_keyword.csv')
     print('list_of_top_scored_org_news_for_keyword_by_org.csv')
     print('top_5_orgs_and_their_news_for_top_scored_business_news.csv')

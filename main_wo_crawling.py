@@ -1,0 +1,35 @@
+import os
+import argparse
+import pandas as pd
+from module.retrieve import retrieve_docs
+from module.visualize import save_pie_chart, save_wordclouds
+
+### 사용 예시
+### python main_wo_crawling.py --file 'results/v3/영화_문화체육관광부_명필름_crawled.csv'
+
+def main():
+    ### Argument Parsing
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--file", dest="file", action="store")
+    args = parser.parse_args()
+    crawling_result = pd.read_csv(args.file)
+    SAVE_ROOT = 'results'
+    business_name = crawling_result.target.iloc[-1]
+    print('문서간 유사도 검사를 수행합니다.')
+    top_of_business_news_contents, tops_of_org_news_contents_splits, result = retrieve_docs(business_name, crawling_result)
+
+    top_of_business_news_contents.to_csv(os.path.join(SAVE_ROOT, 'top_scored_business_news.csv'), index=False, encoding='utf-8-sig')
+    tops_of_org_news_contents_splits.to_csv(os.path.join(SAVE_ROOT, 'list_of_top_scored_org_news.csv'), index=False, encoding='utf-8-sig')
+    result.to_csv(os.path.join(SAVE_ROOT, 'top_5_orgs_and_their_news.csv'), index=False, encoding='utf-8-sig')
+    
+    save_pie_chart(result, SAVE_ROOT)
+    save_wordclouds(result, SAVE_ROOT)
+    
+    print('문서간 유사도 검사가 완료되었습니다. 다음 파일을 생성했습니다.')
+    print(f'저장 폴더: {SAVE_ROOT}')
+    print('top_scored_business_news_for_keyword.csv')
+    print('list_of_top_scored_org_news_for_keyword_by_org.csv')
+    print('top_5_orgs_and_their_news_for_top_scored_business_news.csv')
+    
+if __name__ == '__main__':
+    main()
