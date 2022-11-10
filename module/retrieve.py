@@ -8,44 +8,19 @@ import numpy as np
 pretrained_model_path = "sbert/training_klue_sts_klue-roberta-base-2022-08-17_23-27-13"
 model = SentenceTransformer(pretrained_model_path)
 
-def make_bow(query, articles):
-    name = articles.crawling_trg.unique()[0].split('[SEP]')[0].strip()
-    print(name)
-    articles['content'] = articles.content.str.replace(name, ''.join(name.split()))
-    name = ''.join(name.split())
-    print(name)
-    articles = articles.content.apply(lambda x: x.split()).to_list().copy()
-    articles = [[word if not (query in word) else query for word in article] for article in articles]
-    articles = [[word if not (name in word) else name for word in article] for article in articles]
+def id_by_tf_retrieve(df, keyword_th=0, name_th=0):
+    keyword = df.keyword.unique()[0]
+    name = df.sub_org.unique()[0]
 
-    dct = Dictionary(articles)  # fit dictionary
-    bow_articles = [dct.doc2bow(article) for article in articles]  # convert corpus to BoW format
-    bow_articles = [{k:v for k, v in bow_article} for bow_article in bow_articles]
-    
-    return name, dct, bow_articles
+    keyword_tfs = df.content.str.count(keyword).tolist()
+    name_tfs = df.content.str.count(name).tolist()
 
-def id_by_tf_retrieve(query, name, dct, bow_articles, query_th=0, name_th=0):
-    query_id = dct.token2id[query]
-    query_tfs = []
-    for bow_article in bow_articles:
-        query_tfs.append(bow_article[query_id])
-    query_tfs = np.array(query_tfs)
-
-    name_id = dct.token2id[name]
-    name_tfs = []
-    for bow_article in bow_articles:
-        try:
-            name_tfs.append(bow_article[name_id])
-        except Exception as e:
-            print(e)
-    name_tfs = np.array(name_tfs)
-    
-    tf_pairs = [(q, n) for q, n in zip(query_tfs, name_tfs)]
+    tf_pairs = [(q, n) for q, n in zip(keyword_tfs, name_tfs)]
     ids = {}
     for id, tf_pair in enumerate(tf_pairs):
-        query_tf, name_tf = tf_pair[0], tf_pair[1]
-        if query_tf >= query_th and name_tf >= name_th:
-            ids[id] = query_tfs[id] + name_tfs[id]
+        keyword_tf, name_tf = tf_pair[0], tf_pair[1]
+        if keyword_tf >= keyword_th and name_tf >= name_th:
+            ids[id] = keyword_tfs[id] + name_tfs[id]
     if bool(ids) == False:
         return None, None
     
@@ -72,9 +47,9 @@ def get_indices_and_scores(query, news_contents, top_k):
 
 ### 유사도 점수에 기반하여 문서를 찾아옵니다.
 
-def retrieve_docs(query, business_name, crawling_result):
-    ### crawling_trg에 business_name 이름이 있는 것과 없는 것을 구분하여 데이터를 나눕니다.
-    crawling_result['checker'] = crawling_result.crawling_trg.str.find(business_name)
+def retrieve_docs(keyword, business_name, crawling_result):
+    ### sub_org 칼럼에 business_name 이름이 있는 것과 없는 것을 구분하여 데이터를 나눕니다.
+    crawling_result['checker'] = crawling_result.sub_org.str.find(business_name)
 
     bussiness_news = crawling_result[crawling_result.checker > -1].copy().reset_index(drop=True)
     bussiness_news['idx_original'] = range(len(bussiness_news))
@@ -82,34 +57,32 @@ def retrieve_docs(query, business_name, crawling_result):
     org_news = crawling_result[crawling_result.checker == -1].copy().reset_index(drop=True)
     org_news['idx_original'] = range(len(org_news))
 
-    business_news_contents = bussiness_news[['idx_original', 'crawling_trg', 'pubDate', 'title', 'content', 'link']]
-    org_news_contents = org_news[['idx_original', 'crawling_trg', 'pubDate', 'title', 'content', 'link']]
-    
+    business_news_contents = bussiness_news[['idx_original', 'sub_org', 'keyword', 'pubDate', 'title', 'content', 'link']]
+    org_news_contents = org_news[['idx_original', 'sub_org', 'keyword', 'pubDate', 'title', 'content', 'link']]
     
     ### 비지니스명과 쿼리의 term frequency threshold를 충족한 기사 중 term frequency의 합계가 가장 높은 기사를 가지고 옵니다.(중복시 첫 번째)
-    name, dct, bow_articles = make_bow(query, business_news_contents)
-    doc_id, tf_score = id_by_tf_retrieve(query, name, dct, bow_articles, query_th=1, name_th=3)
+    doc_id, tf_score = id_by_tf_retrieve(business_news_contents, keyword_th=1, name_th=2)
     if doc_id == None:
-        print(f'{name}: 주목할 만한 기사 없음.')
+        print(f'{business_name}: 주목할 만한 기사 없음.')
         print('프로그램을 종료합니다.')
         return None
     else:
         top_of_business_news_contents = business_news_contents.iloc[doc_id].to_list() + list([tf_score])
-        top_of_business_news_contents = pd.DataFrame([top_of_business_news_contents], columns=['idx_original', 'crawling_trg', 'pubDate', 'title', 'content', 'link', 'score'])
+        top_of_business_news_contents = pd.DataFrame([top_of_business_news_contents], columns=['idx_original', 'sub_org', 'keyword', 'pubDate', 'title', 'content', 'link', 'score'])
 
     ### 기관별로 데이터를 나눕니다.
     org_news_contents_splits = []
-    for org in org_news_contents.crawling_trg.unique():
-        org_news_contents_split = org_news_contents[org_news_contents.crawling_trg == org].reset_index(drop=True).copy()
+    for org in org_news_contents.sub_org.unique():
+        org_news_contents_split = org_news_contents[org_news_contents.sub_org == org].reset_index(drop=True).copy()
         org_news_contents_splits.append(org_news_contents_split)
 
     ### 각 기관별 수행. 기관명과 쿼리의 term frequency threshold를 충족한 기사 중 term frequency의 합계가 가장 높은 기사를 가지고 옵니다.(중복시 첫 번째)
     tops_of_org_news_contents_splits = []
     for org_news_contents_split in org_news_contents_splits:
-        name, dct, bow_articles = make_bow(query, org_news_contents_split)
-        doc_id, tf_score = id_by_tf_retrieve(query, name, dct, bow_articles, query_th=2, name_th=3)
+        sub_org_name = org_news_contents_split.sub_org.unique()[0]
+        doc_id, tf_score = id_by_tf_retrieve(org_news_contents_split, keyword_th=2, name_th=3)
         if doc_id == None:
-            print(f'{name}: 주목할 만한 기사 없음.')
+            print(f'{sub_org_name}: 주목할 만한 기사 없음.')
             print()
             continue
         top_of_org_news_contents_split = org_news_contents_split.iloc[doc_id].to_list() + list([tf_score])
@@ -120,7 +93,7 @@ def retrieve_docs(query, business_name, crawling_result):
         print('프로그램을 종료합니다.')
         return None
     
-    tops_of_org_news_contents_splits = pd.DataFrame(tops_of_org_news_contents_splits, columns=['idx_original', 'crawling_trg', 'pubDate', 'title', 'content', 'link', 'score'])
+    tops_of_org_news_contents_splits = pd.DataFrame(tops_of_org_news_contents_splits, columns=['idx_original', 'sub_org', 'keyword', 'pubDate', 'title', 'content', 'link', 'score'])
     tops_of_org_news_contents_splits = tops_of_org_news_contents_splits.sort_values('score', ascending=False).reset_index(drop=True).copy()
 
     ### 가장 높은 점수의 business_name 문서를 쿼리로 하여 

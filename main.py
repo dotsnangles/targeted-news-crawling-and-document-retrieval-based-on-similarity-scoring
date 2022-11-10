@@ -8,7 +8,7 @@ from module.utils import filter_time
 from module.retrieve import retrieve_docs
 
 ### 사용 예시
-### python main.py --query '인공지능' --org '문화체육관광부' --business '클라썸'
+### python main.py --keyword '인공지능' --org '문화체육관광부' --business '클라썸'
 
 def main():
     ### Naver API 사용을 위한 ID와 Key
@@ -27,37 +27,38 @@ def main():
 
     ### Argument Parsing
     parser = argparse.ArgumentParser()
-    parser.add_argument("--query", dest="query", action="store")
+    parser.add_argument("--keyword", dest="keyword", action="store")
     parser.add_argument("--business", dest="business", action="store")
     parser.add_argument("--org", dest="org", action="store")
     args = parser.parse_args()
 
-    query = args.query
+    keyword = args.keyword
     business_name = args.business
     org_name = args.org
     sub_orgs = gov_orgs[args.org]
+    sub_orgs += [business_name]
 
-    ### 입력으로 받은 상위기관의 하위기관-검색어 조합 생성
-    crawling_trgs = []
-    for sub_org in sub_orgs:
-        crawling_trg = '[SEP]'.join([sub_org, query])
-        crawling_trgs.append(crawling_trg)
+    # ### 입력으로 받은 상위기관의 하위기관-검색어 조합 생성
+    # crawling_trgs = []
+    # for sub_org in sub_orgs:
+    #     crawling_trg = '[SEP]'.join([sub_org, keyword])
+    #     crawling_trgs.append(crawling_trg)
 
     ### 사업체-검색어 조합을 크롤링 목록에 추가
-    crawling_trgs.append('[SEP]'.join([business_name, query]))
-    print('다음 목록에 대한 신문기사 크롤링을 시작합니다.')
-    print(', '.join(crawling_trgs))
-    print()
+    # crawling_trgs.append('[SEP]'.join([business_name, keyword]))
+    # print('다음 목록에 대한 신문기사 크롤링을 시작합니다.')
+    # print(', '.join(crawling_trgs))
+    # print()
 
     ### get_news_list와 crawl_news로 Crawling 진행
     crawled_news_dfs = []
-    for crawling_trg in tqdm(crawling_trgs):
-        news_list_df = get_news_list(crawling_trg, client_id, client_secret)
+    for sub_org in tqdm(sub_orgs):
+        news_list_df = get_news_list(sub_org, keyword, client_id, client_secret)
         if type(news_list_df) != type(None):
             ### 90일 전까지의 기사만 필터링합니다.
             news_list_df = filter_time(news_list_df)
             
-            crawled_news_df = crawl_news(query, crawling_trg, news_list_df, headers)
+            crawled_news_df = crawl_news(sub_org, keyword, news_list_df, headers)
             crawled_news_dfs.append(crawled_news_df)
         
     crawling_result = pd.concat(crawled_news_dfs)
@@ -66,21 +67,21 @@ def main():
     crawling_result = preprocess(crawling_result)
 
     ### 저장하기
-    save_name = f'{"_".join([query, org_name, business_name])}_crawled.csv'
+    save_name = f'{"_".join([keyword, org_name, business_name])}_crawled.csv'
     crawling_result.to_csv(save_name, index=False, encoding='utf-8-sig')
     print(f'크롤링이 완료되었습니다. 다음 파일을 생성했습니다.')
     print(f'{save_name}')
     
     print('문서간 유사도 검사를 수행합니다.')
-    top_of_business_news_contents, tops_of_org_news_contents_splits, result = retrieve_docs(query, business_name, crawling_result)
+    top_of_business_news_contents, tops_of_org_news_contents_splits, result = retrieve_docs(keyword, business_name, crawling_result)
 
-    top_of_business_news_contents.to_csv('top_scored_business_news_for_query.csv', index=False, encoding='utf-8-sig')
-    tops_of_org_news_contents_splits.to_csv('list_of_top_scored_org_news_for_query_by_org.csv', index=False, encoding='utf-8-sig')
-    result.to_csv('top_5_orgs_and_their_news_for_top_scored_business_news.csv', index=False, encoding='utf-8-sig')
+    top_of_business_news_contents.to_csv('top_scored_business_news.csv', index=False, encoding='utf-8-sig')
+    tops_of_org_news_contents_splits.to_csv('list_of_top_scored_org_news.csv', index=False, encoding='utf-8-sig')
+    result.to_csv('top_5_orgs_and_their_news.csv', index=False, encoding='utf-8-sig')
     
     print('문서간 유사도 검사가 완료되었습니다. 다음 파일을 생성했습니다.')
-    print('top_scored_business_news_for_query.csv')
-    print('list_of_top_scored_org_news_for_query_by_org.csv')
+    print('top_scored_business_news_for_keyword.csv')
+    print('list_of_top_scored_org_news_for_keyword_by_org.csv')
     print('top_5_orgs_and_their_news_for_top_scored_business_news.csv')
     
 if __name__ == '__main__':
