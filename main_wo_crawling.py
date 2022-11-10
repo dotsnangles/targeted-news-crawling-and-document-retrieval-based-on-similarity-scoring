@@ -12,9 +12,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--file", dest="file", action="store")
     args = parser.parse_args()
+
     crawling_result = pd.read_csv(args.file)
-    SAVE_ROOT = 'results'
     business_name = crawling_result.target.iloc[-1]
+
+    SAVE_ROOT = os.path.join('results', 'temp')
+    os.makedirs(SAVE_ROOT, exist_ok=True)
+    
     print('문서간 유사도 검사를 수행합니다.')
     top_of_business_news_contents, tops_of_org_news_contents_splits, result = retrieve_docs(business_name, crawling_result)
 
@@ -22,14 +26,11 @@ def main():
     tops_of_org_news_contents_splits.to_csv(os.path.join(SAVE_ROOT, 'list_of_top_scored_org_news.csv'), index=False, encoding='utf-8-sig')
     result.to_csv(os.path.join(SAVE_ROOT, 'top_5_orgs_and_their_news.csv'), index=False, encoding='utf-8-sig')
     
+    print('문서간 유사도 검사가 완료되었습니다. 다음 폴더에 결과물을 저장합니다.')
+    print(f'저장 폴더: {SAVE_ROOT}')
+
     save_pie_chart(result, SAVE_ROOT)
     save_wordclouds(result, SAVE_ROOT)
-    
-    print('문서간 유사도 검사가 완료되었습니다. 다음 파일을 생성했습니다.')
-    print(f'저장 폴더: {SAVE_ROOT}')
-    print('top_scored_business_news_for_keyword.csv')
-    print('list_of_top_scored_org_news_for_keyword_by_org.csv')
-    print('top_5_orgs_and_their_news_for_top_scored_business_news.csv')
     
 if __name__ == '__main__':
     main()

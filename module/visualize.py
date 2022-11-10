@@ -24,7 +24,7 @@ def save_pie_chart(result, SAVE_ROOT):
             shadow=True, startangle=90)
     ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
     plt.title('각 기관별 관련도')
-    plt.savefig(os.path.join(SAVE_ROOT, 'results/pie_chart.png'))
+    plt.savefig(os.path.join(SAVE_ROOT, 'pie_chart.png'))
 
 def save_wordclouds(result, SAVE_ROOT):
     for idx, row in result.iterrows():

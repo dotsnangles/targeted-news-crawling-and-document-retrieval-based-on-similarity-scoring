@@ -58,7 +58,8 @@ def main():
 
     ### 저장하기
     
-    SAVE_ROOT = 'results'
+    SAVE_ROOT = os.path.join('results', '_'.join([keyword, org_name, business_name]))
+    os.makedirs(SAVE_ROOT, exist_ok=True)
     
     save_name = f'{"_".join([keyword, org_name, business_name])}_crawled.csv'
     crawling_result.to_csv(os.path.join(SAVE_ROOT, save_name), index=False, encoding='utf-8-sig')
