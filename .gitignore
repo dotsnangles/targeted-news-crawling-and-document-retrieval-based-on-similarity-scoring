@@ -1,6 +1,7 @@
 sbert
 results
 crawling_errors
+mecab
 .old
 .old_results
 __pycache__

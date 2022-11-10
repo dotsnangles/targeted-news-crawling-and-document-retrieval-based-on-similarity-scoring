@@ -5,7 +5,7 @@ from module.retrieve import retrieve_docs
 from module.visualize import save_pie_chart, save_wordclouds
 
 ### 사용 예시
-### python main_wo_crawling.py --file 'results/인공지능_문화체육관광부_클라썸/인공지능_문화체육관광부_클라썸_crawled.csv' --path '인공지능_문화체육관광부_클라썸_test_wo_crawling'
+### python main_wo_crawling.py --file 'results/인공지능_문화체육관광부_클라썸/인공지능_문화체육관광부_클라썸_crawled.csv' --path '인공지능_문화체육관광부_클라썸_test_wo_crawling_v2'
 
 def main():
     ### Argument Parsing
