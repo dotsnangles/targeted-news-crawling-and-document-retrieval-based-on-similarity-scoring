@@ -40,13 +40,13 @@ def main():
     ### 입력으로 받은 상위기관의 하위기관-검색어 조합 생성
     crawling_trgs = []
     for sub_org in sub_orgs:
-        crawling_trg = ' '.join([sub_org, query])
+        crawling_trg = '[SEP]'.join([sub_org, query])
         crawling_trgs.append(crawling_trg)
 
     ### 사업체-검색어 조합을 크롤링 목록에 추가
-    crawling_trgs.append(' '.join([business_name, query]))
-    print('다음 항목들에 대하여 크롤링을 시작합니다.')
-    print(' / '.join(crawling_trgs))
+    crawling_trgs.append('[SEP]'.join([business_name, query]))
+    print('다음 목록에 대한 신문기사 크롤링을 시작합니다.')
+    print(', '.join(crawling_trgs))
     print()
 
     ### get_news_list와 crawl_news로 Crawling 진행

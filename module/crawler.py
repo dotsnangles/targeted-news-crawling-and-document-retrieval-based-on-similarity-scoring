@@ -10,6 +10,9 @@ from datetime import datetime
 
 ### Naver API에서 뉴스 항목을 불러옵니다.
 def get_news_list(crawling_trg, client_id, client_secret):
+    crawling_trg_saved = crawling_trg
+    crawling_trg = ' '.join(crawling_trg.split('[SEP]'))
+    
     news_list = []
     for step in range(1, 1100, 100):
         if step == 1001:
@@ -43,12 +46,13 @@ def get_news_list(crawling_trg, client_id, client_secret):
         #     break
     
     news_list_df = pd.DataFrame(news_list).drop_duplicates()
+    print(news_list_df.columns)
     
     try:
         news_list_df['checker'] = news_list_df.link.str.find('https://n.news.naver.com/')
         news_list_df = news_list_df[news_list_df['checker'] > -1]
         news_list_df.reset_index(inplace=True)
-        news_list_df['crawling_trg'] = crawling_trg
+        news_list_df['crawling_trg'] = crawling_trg_saved
         return news_list_df
     except Exception as e:
         print(e)
@@ -88,7 +92,7 @@ def crawl_news(query, crawling_trg, news_list_df, headers):
     
     crawled_news_df = pd.DataFrame(crawled_news, columns=['crawling_trg', 'pubDate', 'title', 'content', 'originallink', 'link', 'description'])
     
-    sub_org = crawling_trg.split(query)[0].strip()
+    sub_org = crawling_trg.split('[SEP]')[0].strip()
     
     ### 쿼리와 기관명이 들어가 있는 기사만 추려냅니다.
     search_sub_org = crawled_news_df.content.str.contains(sub_org, case=False, regex=True)
