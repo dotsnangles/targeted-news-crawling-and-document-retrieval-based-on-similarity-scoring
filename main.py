@@ -50,6 +50,7 @@ def main():
         crawled_news_df = crawl_news(target, args.keyword, news_list_df, headers)
         crawled_news_dfs.append(crawled_news_df)
     if len(crawled_news_dfs) == 0:
+        print('크롤링 결과가 존재하지 않습니다. 오류 로그를 확인하세요.')
         return
     crawling_result = pd.concat(crawled_news_dfs)
 
@@ -68,22 +69,19 @@ def main():
     ### 유사도 점수 기반 리트리벌 시작
     print('문서간 유사도 검사를 수행합니다.')
     top_of_business_news_contents, tops_of_org_news_contents_splits, result = retrieve_docs(args.business, crawling_result)
-    # if type(top_of_business_news_contents) == type(None):
-    #     return
+    if type(top_of_business_news_contents) == type(None):
+        return
 
     ### 유사도 점수 기반 리트리벌 결과 저장하기
     top_of_business_news_contents.to_csv(os.path.join(SAVE_ROOT, 'top_scored_business_news.csv'), index=False, encoding='utf-8-sig')
     tops_of_org_news_contents_splits.to_csv(os.path.join(SAVE_ROOT, 'list_of_top_scored_org_news.csv'), index=False, encoding='utf-8-sig')
     result.to_csv(os.path.join(SAVE_ROOT, 'top_5_orgs_and_their_news.csv'), index=False, encoding='utf-8-sig')
-    
+
+    print('문서간 유사도 검사가 완료되었습니다. 다음 폴더에 결과물을 저장합니다.')
+    print(f'저장 폴더: {SAVE_ROOT}')
+
     save_pie_chart(result, SAVE_ROOT)
     save_wordclouds(result, SAVE_ROOT)
-    
-    print('문서간 유사도 검사가 완료되었습니다. 다음 파일을 생성했습니다.')
-    print(f'저장 폴더: {SAVE_ROOT}')
-    print('top_scored_business_news_for_keyword.csv')
-    print('list_of_top_scored_org_news_for_keyword_by_org.csv')
-    print('top_5_orgs_and_their_news_for_top_scored_business_news.csv')
     
 if __name__ == '__main__':
     main()

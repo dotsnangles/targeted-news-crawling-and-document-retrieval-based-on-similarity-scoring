@@ -68,6 +68,7 @@ def retrieve_docs(business_name, crawling_result):
         return None, None, None
     else:
         top_of_business_news_contents = business_news_contents.iloc[doc_id].to_list() + list([tf_score])
+        print((f'{business_name}: 주목할 만한 기사 {len(top_of_business_news_contents)}건.'))
         top_of_business_news_contents = pd.DataFrame([top_of_business_news_contents], columns=['idx_original', 'target', 'keyword', 'pubDate', 'title', 'content', 'link', 'score'])
 
     ### 기관별로 데이터를 나눕니다.
@@ -83,9 +84,9 @@ def retrieve_docs(business_name, crawling_result):
         doc_id, tf_score = id_by_tf_retrieve(org_news_contents_split, keyword_th=2, name_th=3)
         if doc_id == None:
             print(f'{target_name}: 주목할 만한 기사 없음.')
-            print()
             continue
         top_of_org_news_contents_split = org_news_contents_split.iloc[doc_id].to_list() + list([tf_score])
+        print(f'{target_name}: 주목할 만한 기사 {len(top_of_org_news_contents_split)}건.')
         tops_of_org_news_contents_splits.append(top_of_org_news_contents_split)
 
     if len(tops_of_org_news_contents_splits) == 0:
