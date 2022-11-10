@@ -41,8 +41,8 @@ def get_news_list(sub_org, keyword, client_id, client_secret):
         
         time.sleep(1)
         
-        if step == 101:
-            break
+        # if step == 101:
+        #     break
     
     news_list_df = pd.DataFrame(news_list).drop_duplicates()
     # print(news_list_df.columns)
@@ -88,8 +88,8 @@ def crawl_news(sub_org, keyword, news_list_df, headers):
         
         time.sleep(1)
         
-        if idx == 3:
-            break
+        # if idx == 3:
+        #     break
     
     crawled_news_df = pd.DataFrame(crawled_news, columns=['sub_org', 'keyword', 'pubDate', 'title', 'content', 'originallink', 'link', 'description'])
     

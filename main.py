@@ -38,19 +38,7 @@ def main():
     sub_orgs = gov_orgs[args.org]
     sub_orgs += [business_name]
 
-    # ### 입력으로 받은 상위기관의 하위기관-검색어 조합 생성
-    # crawling_trgs = []
-    # for sub_org in sub_orgs:
-    #     crawling_trg = '[SEP]'.join([sub_org, keyword])
-    #     crawling_trgs.append(crawling_trg)
-
-    ### 사업체-검색어 조합을 크롤링 목록에 추가
-    # crawling_trgs.append('[SEP]'.join([business_name, keyword]))
-    # print('다음 목록에 대한 신문기사 크롤링을 시작합니다.')
-    # print(', '.join(crawling_trgs))
-    # print()
-
-    ### get_news_list와 crawl_news로 Crawling 진행
+    ### 하위기관명과 키워드 조합 / 비지니스명과 키워드 조합 크롤링 수행
     crawled_news_dfs = []
     for sub_org in tqdm(sub_orgs):
         news_list_df = get_news_list(sub_org, keyword, client_id, client_secret)
@@ -73,7 +61,7 @@ def main():
     print(f'{save_name}')
     
     print('문서간 유사도 검사를 수행합니다.')
-    top_of_business_news_contents, tops_of_org_news_contents_splits, result = retrieve_docs(keyword, business_name, crawling_result)
+    top_of_business_news_contents, tops_of_org_news_contents_splits, result = retrieve_docs(business_name, crawling_result)
 
     top_of_business_news_contents.to_csv('top_scored_business_news.csv', index=False, encoding='utf-8-sig')
     tops_of_org_news_contents_splits.to_csv('list_of_top_scored_org_news.csv', index=False, encoding='utf-8-sig')

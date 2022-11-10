@@ -47,7 +47,7 @@ def get_indices_and_scores(query, news_contents, top_k):
 
 ### 유사도 점수에 기반하여 문서를 찾아옵니다.
 
-def retrieve_docs(keyword, business_name, crawling_result):
+def retrieve_docs(business_name, crawling_result):
     ### sub_org 칼럼에 business_name 이름이 있는 것과 없는 것을 구분하여 데이터를 나눕니다.
     crawling_result['checker'] = crawling_result.sub_org.str.find(business_name)
 
