@@ -58,7 +58,7 @@ def get_news_list(target, keyword, client_id, client_secret):
     except Exception as e:
         print(e)
         time_stamp = str(datetime.now())
-        news_list_df.to_csv(f'{crawling_trg}_{e}_{time_stamp}.csv', index=False, encoding='utf-8-sig')
+        news_list_df.to_csv(f'crawling_errors/{crawling_trg}_{e}_{time_stamp}.csv', index=False, encoding='utf-8-sig')
         return None
 
 
@@ -88,7 +88,7 @@ def crawl_news(target, keyword, news_list_df, headers):
         
         time.sleep(1)
         
-        # if idx == 3:
+        # if idx == 1:
         #     break
     
     crawled_news_df = pd.DataFrame(crawled_news, columns=['target', 'keyword', 'pubDate', 'title', 'content', 'originallink', 'link', 'description'])

@@ -34,41 +34,44 @@ def main():
     parser.add_argument("--org", dest="org", action="store")
     args = parser.parse_args()
 
-    keyword = args.keyword
-    business_name = args.business
-    org_name = args.org
+    ### 크롤링 타겟 설정
     targets = gov_orgs[args.org]
-    targets += [business_name]
+    targets += [args.business]
 
     ### 하위기관명과 키워드 조합 / 비지니스명과 키워드 조합 크롤링 수행
     crawled_news_dfs = []
     for target in tqdm(targets):
-        news_list_df = get_news_list(target, keyword, client_id, client_secret)
-        if type(news_list_df) != type(None):
-            ### 90일 전까지의 기사만 필터링합니다.
-            news_list_df = filter_time(news_list_df)
-            
-            crawled_news_df = crawl_news(target, keyword, news_list_df, headers)
-            crawled_news_dfs.append(crawled_news_df)
+        news_list_df = get_news_list(target, args.keyword, client_id, client_secret)
+        if type(news_list_df) == type(None):
+            continue
+        ### 90일 전까지의 기사만 필터링합니다.
+        news_list_df = filter_time(news_list_df)
         
+        crawled_news_df = crawl_news(target, args.keyword, news_list_df, headers)
+        crawled_news_dfs.append(crawled_news_df)
+    if len(crawled_news_dfs) == 0:
+        return
     crawling_result = pd.concat(crawled_news_dfs)
 
     ### 간단한 전처리를 진행합니다.
     crawling_result = preprocess(crawling_result)
 
-    ### 저장하기
-    
-    SAVE_ROOT = os.path.join('results', '_'.join([keyword, org_name, business_name]))
+    ### 크롤링 데이터 저장하기
+    SAVE_ROOT = os.path.join('results', '_'.join([args.keyword, args.org, args.business]))
     os.makedirs(SAVE_ROOT, exist_ok=True)
     
-    save_name = f'{"_".join([keyword, org_name, business_name])}_crawled.csv'
+    save_name = f'{"_".join([args.keyword, args.org, args.business])}_crawled.csv'
     crawling_result.to_csv(os.path.join(SAVE_ROOT, save_name), index=False, encoding='utf-8-sig')
     print(f'크롤링이 완료되었습니다. 다음 파일을 생성했습니다.')
     print(f'{os.path.join(SAVE_ROOT, save_name)}')
     
+    ### 유사도 점수 기반 리트리벌 시작
     print('문서간 유사도 검사를 수행합니다.')
-    top_of_business_news_contents, tops_of_org_news_contents_splits, result = retrieve_docs(business_name, crawling_result)
+    top_of_business_news_contents, tops_of_org_news_contents_splits, result = retrieve_docs(args.business, crawling_result)
+    # if type(top_of_business_news_contents) == type(None):
+    #     return
 
+    ### 유사도 점수 기반 리트리벌 결과 저장하기
     top_of_business_news_contents.to_csv(os.path.join(SAVE_ROOT, 'top_scored_business_news.csv'), index=False, encoding='utf-8-sig')
     tops_of_org_news_contents_splits.to_csv(os.path.join(SAVE_ROOT, 'list_of_top_scored_org_news.csv'), index=False, encoding='utf-8-sig')
     result.to_csv(os.path.join(SAVE_ROOT, 'top_5_orgs_and_their_news.csv'), index=False, encoding='utf-8-sig')

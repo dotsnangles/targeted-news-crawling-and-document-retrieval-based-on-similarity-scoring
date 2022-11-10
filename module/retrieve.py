@@ -61,11 +61,11 @@ def retrieve_docs(business_name, crawling_result):
     org_news_contents = org_news[['idx_original', 'target', 'keyword', 'pubDate', 'title', 'content', 'link']]
     
     ### 비지니스명과 쿼리의 term frequency threshold를 충족한 기사 중 term frequency의 합계가 가장 높은 기사를 가지고 옵니다.(중복시 첫 번째)
-    doc_id, tf_score = id_by_tf_retrieve(business_news_contents, keyword_th=1, name_th=2)
+    doc_id, tf_score = id_by_tf_retrieve(business_news_contents, keyword_th=1, name_th=1)
     if doc_id == None:
         print(f'{business_name}: 주목할 만한 기사 없음.')
         print('프로그램을 종료합니다.')
-        return None
+        return None, None, None
     else:
         top_of_business_news_contents = business_news_contents.iloc[doc_id].to_list() + list([tf_score])
         top_of_business_news_contents = pd.DataFrame([top_of_business_news_contents], columns=['idx_original', 'target', 'keyword', 'pubDate', 'title', 'content', 'link', 'score'])
@@ -91,7 +91,7 @@ def retrieve_docs(business_name, crawling_result):
     if len(tops_of_org_news_contents_splits) == 0:
         print('검색한 상위 기관에 대하여 주목할 만한 기사 없음.')
         print('프로그램을 종료합니다.')
-        return None
+        return None, None, None
     
     tops_of_org_news_contents_splits = pd.DataFrame(tops_of_org_news_contents_splits, columns=['idx_original', 'target', 'keyword', 'pubDate', 'title', 'content', 'link', 'score'])
     tops_of_org_news_contents_splits = tops_of_org_news_contents_splits.sort_values('score', ascending=False).reset_index(drop=True).copy()

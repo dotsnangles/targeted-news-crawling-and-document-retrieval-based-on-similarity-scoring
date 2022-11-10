@@ -1,5 +1,6 @@
 sbert
 results
+crawling_errors
 .old
 .old_results
 __pycache__
