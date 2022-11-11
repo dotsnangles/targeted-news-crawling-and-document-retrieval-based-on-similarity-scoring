@@ -5,7 +5,7 @@ from module.retrieve import retrieve_docs
 from module.visualize import save_pie_chart, save_wordclouds
 
 ### 사용 예시
-### python main_wo_crawling.py --file 'results/인공지능_문화체육관광부_클라썸/인공지능_문화체육관광부_클라썸_crawled.csv' --path '인공지능_문화체육관광부_클라썸_test_wo_crawling_v2'
+### python main_wo_crawling.py --file 'results/인공지능_문화체육관광부_클라썸/인공지능_문화체육관광부_클라썸_crawled.csv' --path '인공지능_문화체육관광부_클라썸_v4_test'
 
 def main():
     ### Argument Parsing
@@ -27,7 +27,7 @@ def main():
 
     top_of_business_news_contents.to_csv(os.path.join(SAVE_ROOT, 'top_scored_business_news.csv'), index=False, encoding='utf-8-sig')
     tops_of_org_news_contents_splits.to_csv(os.path.join(SAVE_ROOT, 'list_of_top_scored_org_news.csv'), index=False, encoding='utf-8-sig')
-    result.to_csv(os.path.join(SAVE_ROOT, 'top_5_orgs_and_their_news.csv'), index=False, encoding='utf-8-sig')
+    result.to_csv(os.path.join(SAVE_ROOT, 'top_orgs_and_their_news.csv'), index=False, encoding='utf-8-sig')
     
     print('문서간 유사도 검사가 완료되었습니다. 다음 폴더에 결과물을 저장합니다.')
     print(f'저장 폴더: {SAVE_ROOT}')

@@ -76,7 +76,7 @@ def main():
     ### 유사도 점수 기반 리트리벌 결과 저장하기
     top_of_business_news_contents.to_csv(os.path.join(SAVE_ROOT, 'top_scored_business_news.csv'), index=False, encoding='utf-8-sig')
     tops_of_org_news_contents_splits.to_csv(os.path.join(SAVE_ROOT, 'list_of_top_scored_org_news.csv'), index=False, encoding='utf-8-sig')
-    result.to_csv(os.path.join(SAVE_ROOT, 'top_5_orgs_and_their_news.csv'), index=False, encoding='utf-8-sig')
+    result.to_csv(os.path.join(SAVE_ROOT, 'top_orgs_and_their_news.csv'), index=False, encoding='utf-8-sig')
 
     print('문서간 유사도 검사가 완료되었습니다. 다음 폴더에 결과물을 저장합니다.')
     print(f'저장 폴더: {SAVE_ROOT}')
