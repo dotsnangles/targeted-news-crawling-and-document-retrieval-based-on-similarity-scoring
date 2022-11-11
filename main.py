@@ -11,6 +11,7 @@ from module.visualize import save_pie_chart, save_wordclouds
 
 ### 사용 예시
 ### python main.py --keyword '인공지능' --org '문화체육관광부' --business '클라썸'
+### python main.py --keyword '영화' --org '문화체육관광부' --business '명필름'
 
 def main():
     ### Naver API 사용을 위한 ID와 Key

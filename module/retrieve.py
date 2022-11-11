@@ -99,7 +99,7 @@ def retrieve_docs(business_name, crawling_result):
 
     ### 가장 높은 점수의 비지니스 뉴스를 쿼리로 하여 
     ### 가장 높은 점수를 받은 기관별 뉴스 뭉치와 유사도 점수를 계산하고 유사도 점수 상위 5개 문서를 찾아옵니다.
-    indices, scores = get_indices_and_scores(top_of_business_news_contents.content.iloc[0], tops_of_org_news_contents_splits, 5)
+    indices, scores = get_indices_and_scores(top_of_business_news_contents.content.iloc[0], tops_of_org_news_contents_splits, len(tops_of_org_news_contents_splits))
     result = tops_of_org_news_contents_splits.iloc[list(indices)].copy()
     result['score'] = scores
 
